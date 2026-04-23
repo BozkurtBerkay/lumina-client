@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import userService from '../services/userService';
+import schoolService from '../services/schoolService';
 import type { UpdateUserDTO } from '../services/userService';
+import type { School } from '../services/schoolService';
 import axios from 'axios';
+
+const ROLES_WITH_SCHOOL = ['STUDENT', 'TEACHER'];
 
 const UserDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,11 +21,13 @@ const UserDetail: React.FC = () => {
     role: 'STUDENT',
     schoolId: ''
   });
+  const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
+    schoolService.getAllSchools().then(setSchools).catch(() => {});
     if (isEdit && id) {
       fetchUser(id);
     }
@@ -32,7 +38,7 @@ const UserDetail: React.FC = () => {
       const user = await userService.getUserById(userId);
       setFormData({
         email: user.email,
-        password: '', // Şifreyi güvenlik için boş bırakıyoruz
+        password: '',
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
@@ -57,8 +63,8 @@ const UserDetail: React.FC = () => {
           firstName: formData.firstName,
           lastName: formData.lastName,
           role: formData.role,
+          schoolId: formData.schoolId || undefined,
         };
-        
         if (formData.password) {
           updateData.passwordHash = formData.password;
         }
@@ -66,7 +72,8 @@ const UserDetail: React.FC = () => {
       } else {
         await userService.createUser({
           ...formData,
-          passwordHash: formData.password
+          passwordHash: formData.password,
+          schoolId: formData.schoolId || undefined,
         });
       }
       navigate('/users');
@@ -80,6 +87,8 @@ const UserDetail: React.FC = () => {
       setSaving(false);
     }
   };
+
+  const showSchoolField = ROLES_WITH_SCHOOL.includes(formData.role);
 
   if (loading) return <div className="loading">Yükleniyor...</div>;
 
@@ -139,7 +148,7 @@ const UserDetail: React.FC = () => {
               <label>Rol</label>
               <select
                 value={formData.role}
-                onChange={e => setFormData({ ...formData, role: e.target.value })}
+                onChange={e => setFormData({ ...formData, role: e.target.value, schoolId: '' })}
               >
                 <option value="ADMIN">Admin</option>
                 <option value="TEACHER">Öğretmen</option>
@@ -147,6 +156,23 @@ const UserDetail: React.FC = () => {
                 <option value="PARENT">Veli</option>
               </select>
             </div>
+
+            {showSchoolField && (
+              <div className="form-group">
+                <label>Okul</label>
+                <select
+                  value={formData.schoolId}
+                  onChange={e => setFormData({ ...formData, schoolId: e.target.value })}
+                >
+                  <option value="">-- Okul seçin (opsiyonel) --</option>
+                  {schools.map(school => (
+                    <option key={school.id} value={school.id}>
+                      {school.name}{school.city ? ` (${school.city})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           <div className="form-actions">
@@ -161,3 +187,4 @@ const UserDetail: React.FC = () => {
 };
 
 export default UserDetail;
+
