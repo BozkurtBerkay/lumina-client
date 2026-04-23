@@ -10,13 +10,16 @@ RUN npm run build
 
 # ---- Production Stage ----
 FROM nginx:alpine
-# Remove default nginx static assets
 RUN rm -rf /usr/share/nginx/html/*
 
 # Copy build assets
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Custom nginx config template for SPA routing and dynamic PORT
-COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+# Copy nginx config (with RAILWAY_PORT placeholder)
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Let the official Nginx entrypoint handle env mapping and running
+# Copy and make startup script executable
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+CMD ["/start.sh"]
