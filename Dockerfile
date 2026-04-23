@@ -16,8 +16,7 @@ RUN rm -rf /usr/share/nginx/html/*
 # Copy build assets
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Custom nginx config for SPA routing
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Custom nginx config template for SPA routing and dynamic PORT
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 
-EXPOSE 80
-CMD sed -i -e 's/80/'"${PORT:-80}"'/g' /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'
+# Let the official Nginx entrypoint handle env mapping and running
