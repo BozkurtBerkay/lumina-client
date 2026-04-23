@@ -18,8 +18,8 @@ COPY --from=build /app/dist /usr/share/nginx/html
 # Copy nginx config (with RAILWAY_PORT placeholder)
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy and make startup script executable
+# Copy startup script and make it executable
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
-CMD ["/start.sh"]
+ENTRYPOINT ["/bin/sh", "/start.sh"]
